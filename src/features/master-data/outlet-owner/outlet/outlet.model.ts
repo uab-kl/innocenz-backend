@@ -2,7 +2,7 @@ import { timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
 import { MainSchema } from '@/db/db.schema';
 import { OutletOwnerTable } from '../outlet-owner.model';
 
-export const OutletTable = MainSchema.table('outlet', {
+export const OutletTable = MainSchema.table('m_outlet', {
     id: uuid('id').defaultRandom().notNull().primaryKey(),
     outletOwnerId: uuid('outlet_owner_id').references(() => OutletOwnerTable.id).notNull(),
     outletName: varchar('outlet_name', { length: 100 }).notNull(),

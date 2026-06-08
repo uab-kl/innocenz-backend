@@ -17,6 +17,7 @@ import v1Router from '@/router/v1.js';
 import { requestLoggerMiddleware } from './middlewares/request-logger';
 import { env } from './env';
 import { logger } from './util/logger';
+import { initAdmin } from './scripts/init-admin';
 
 const app = express();
 
@@ -188,5 +189,11 @@ server.listen(Number(PORT), async () => {
   if (env.NODE_ENV === 'production') {
     logger.info('Running migrations...');
     await runMigrations();
+  }
+
+  try {
+    await initAdmin();
+  } catch (error) {
+    logger.error('Failed to initialize default admin', error);
   }
 });

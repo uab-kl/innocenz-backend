@@ -1,7 +1,7 @@
 import { timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
 import { MainSchema } from '@/db/db.schema';
 
-export const AgencyTable = MainSchema.table('agency', {
+export const AgencyTable = MainSchema.table('m_agency', {
     id: uuid('id').defaultRandom().notNull().primaryKey(),
     agencyName: varchar('agency_name', { length: 100 }).notNull(),
     agencyAddress: varchar('agency_address', { length: 255 }).notNull(),

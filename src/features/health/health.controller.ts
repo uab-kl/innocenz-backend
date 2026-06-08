@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
+import { sql } from 'drizzle-orm';
 import { db } from '@/db/index';
-import { test } from '@/db/db.model';
 import { Error } from '@/error/index.js';
 import { logger } from '@/util/logger.js';
 
@@ -19,7 +19,7 @@ class HealthControllerClass {
   async dbHealthCheck(_req: Request, res: Response): Promise<void> {
     try {
       const startTime = Date.now();
-      const result = await db.select().from(test);
+      await db.execute(sql`SELECT 1`);
       const responseTime = Date.now() - startTime;
 
       res.status(200).json({
@@ -28,7 +28,6 @@ class HealthControllerClass {
         data: {
           status: 'healthy',
           responseTimeMs: responseTime,
-          records: result.length,
           timestamp: new Date().toISOString(),
         },
       });

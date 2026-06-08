@@ -1,18 +1,17 @@
-import type { UserType } from './auth.model';
+import type { AdminType } from '@/features/admin/admin.model';
 import { authRepository, jwtController } from '@/composition-root';
 import type { GraphQLContext } from '@/graphql/context';
 import { comparePassword, hashPassword } from '@/util/password';
 import { GraphQLError } from 'graphql';
 
-function transformUser(user: UserType) {
+function transformAdmin(admin: AdminType) {
   return {
-    id: user.id,
-    email: user.email,
-    displayName: user.displayName,
-    contactNo: user.contactNo,
-    isActive: user.isActive,
-    createdAt: user.createdAt.toISOString(),
-    updatedAt: user.updatedAt.toISOString(),
+    id: admin.id,
+    email: admin.email,
+    displayName: admin.displayName,
+    status: admin.status,
+    createdAt: admin.createdAt.toISOString(),
+    updatedAt: admin.updatedAt.toISOString(),
   };
 }
 
@@ -24,28 +23,28 @@ export const resolvers = {
           extensions: { code: 'UNAUTHENTICATED', http: { status: 401 } },
         });
       }
-      return transformUser(context.user);
+      return transformAdmin(context.user);
     },
   },
 
   Mutation: {
     login: async (_: unknown, { input }: { input: { email: string; password: string } }) => {
       const { email, password } = input;
-      const user = await authRepository.getUserByEmail(email);
+      const admin = await authRepository.getAdminByEmail(email);
 
-      if (!user) {
+      if (!admin) {
         throw new GraphQLError('Invalid email or password', {
           extensions: { code: 'UNAUTHENTICATED', http: { status: 401 } },
         });
       }
 
-      if (!user.isActive) {
+      if (admin.status !== 'active') {
         throw new GraphQLError('Account is deactivated', {
           extensions: { code: 'FORBIDDEN', http: { status: 403 } },
         });
       }
 
-      const isPasswordValid = await comparePassword(password, user.passwordHash);
+      const isPasswordValid = await comparePassword(password, admin.password);
       if (!isPasswordValid) {
         throw new GraphQLError('Invalid email or password', {
           extensions: { code: 'UNAUTHENTICATED', http: { status: 401 } },
@@ -63,7 +62,7 @@ export const resolvers = {
         expiresAt: decodedToken.exp
           ? new Date(decodedToken.exp * 1000).toISOString()
           : new Date(Date.now() + 3600000).toISOString(),
-        user: transformUser(user),
+        user: transformAdmin(admin),
       };
     },
 
@@ -72,26 +71,27 @@ export const resolvers = {
       {
         input,
       }: {
-        input: { email: string; displayName: string; password: string; contactNo?: string | null };
+        input: { email: string; displayName: string; password: string };
       },
     ) => {
-      const existing = await authRepository.getUserByEmail(input.email);
+      const existing = await authRepository.getAdminByEmail(input.email);
       if (existing) {
-        throw new GraphQLError('User with this email already exists', {
+        throw new GraphQLError('Admin with this email already exists', {
           extensions: { code: 'BAD_USER_INPUT', http: { status: 409 } },
         });
       }
 
       const passwordHash = await hashPassword(input.password);
-      const user = await authRepository.createUser({
+      const admin = await authRepository.createAdmin({
         email: input.email,
         displayName: input.displayName,
-        passwordHash,
-        contactNo: input.contactNo ?? null,
-        isActive: true,
+        password: passwordHash,
+        status: 'active',
+        createdBy: 'system',
+        updatedBy: 'system',
       });
 
-      return transformUser(user);
+      return transformAdmin(admin);
     },
   },
 };

@@ -3,8 +3,7 @@ export const typeDefs = `#graphql
     id: ID!
     email: String!
     displayName: String!
-    contactNo: String
-    isActive: Boolean!
+    status: String!
     createdAt: String!
     updatedAt: String!
   }
@@ -18,7 +17,6 @@ export const typeDefs = `#graphql
     email: String!
     displayName: String!
     password: String!
-    contactNo: String
   }
 
   type AuthResponse {

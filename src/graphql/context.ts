@@ -1,9 +1,9 @@
 import { Request } from 'express';
 import { authRepository } from '@/composition-root';
-import type { UserType } from '@/features/auth/auth.model';
+import type { AdminType } from '@/features/admin/admin.model';
 
 export interface GraphQLContext {
-  user: UserType | null;
+  user: AdminType | null;
   req: Request;
 }
 

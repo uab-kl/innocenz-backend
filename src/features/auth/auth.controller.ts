@@ -15,7 +15,6 @@ const RegisterSchema = z.object({
   email: z.email('Invalid email format'),
   displayName: z.string().min(1, 'Display name is required').max(100),
   password: z.string().min(6, 'Password must be at least 6 characters'),
-  contactNo: z.string().max(20).optional(),
 });
 
 class AuthControllerClass {
@@ -36,9 +35,9 @@ class AuthControllerClass {
       }
 
       const { email, password } = parseResult.data;
-      const user = await this.authRepository.getUserByEmail(email);
+      const admin = await this.authRepository.getAdminByEmail(email);
 
-      if (!user) {
+      if (!admin) {
         return res.status(401).json({
           success: false,
           message: Error.INVALID_CREDENTIALS,
@@ -46,7 +45,7 @@ class AuthControllerClass {
         });
       }
 
-      if (!user.isActive) {
+      if (admin.status !== 'active') {
         return res.status(403).json({
           success: false,
           message: 'Account is deactivated',
@@ -54,7 +53,7 @@ class AuthControllerClass {
         });
       }
 
-      const isPasswordValid = await comparePassword(password, user.passwordHash);
+      const isPasswordValid = await comparePassword(password, admin.password);
       if (!isPasswordValid) {
         return res.status(401).json({
           success: false,
@@ -81,11 +80,10 @@ class AuthControllerClass {
             ? new Date(decodedToken.exp * 1000).toISOString()
             : new Date(Date.now() + 3600000).toISOString(),
           user: {
-            id: user.id,
-            email: user.email,
-            displayName: user.displayName,
-            contactNo: user.contactNo,
-            isActive: user.isActive,
+            id: admin.id,
+            email: admin.email,
+            displayName: admin.displayName,
+            status: admin.status,
           },
         },
       });
@@ -110,8 +108,8 @@ class AuthControllerClass {
         });
       }
 
-      const { email, displayName, password, contactNo } = parseResult.data;
-      const existing = await this.authRepository.getUserByEmail(email);
+      const { email, displayName, password } = parseResult.data;
+      const existing = await this.authRepository.getAdminByEmail(email);
       if (existing) {
         return res.status(409).json({
           success: false,
@@ -121,23 +119,23 @@ class AuthControllerClass {
       }
 
       const passwordHash = await hashPassword(password);
-      const user = await this.authRepository.createUser({
+      const admin = await this.authRepository.createAdmin({
         email,
         displayName,
-        passwordHash,
-        contactNo: contactNo ?? null,
-        isActive: true,
+        password: passwordHash,
+        status: 'active',
+        createdBy: 'system',
+        updatedBy: 'system',
       });
 
       return res.status(201).json({
         success: true,
-        message: 'User registered successfully',
+        message: 'Admin registered successfully',
         data: {
-          id: user.id,
-          email: user.email,
-          displayName: user.displayName,
-          contactNo: user.contactNo,
-          isActive: user.isActive,
+          id: admin.id,
+          email: admin.email,
+          displayName: admin.displayName,
+          status: admin.status,
         },
       });
     } catch (error) {
@@ -157,8 +155,8 @@ class AuthControllerClass {
         return res.status(401).json({ success: false, message: Error.UNAUTHORIZED, data: null });
       }
 
-      const user = await this.authRepository.getUserDataByToken(token);
-      if (!user) {
+      const admin = await this.authRepository.getUserDataByToken(token);
+      if (!admin) {
         return res.status(401).json({ success: false, message: Error.UNAUTHORIZED, data: null });
       }
 
@@ -166,13 +164,12 @@ class AuthControllerClass {
         success: true,
         message: 'Profile retrieved',
         data: {
-          id: user.id,
-          email: user.email,
-          displayName: user.displayName,
-          contactNo: user.contactNo,
-          isActive: user.isActive,
-          createdAt: user.createdAt.toISOString(),
-          updatedAt: user.updatedAt.toISOString(),
+          id: admin.id,
+          email: admin.email,
+          displayName: admin.displayName,
+          status: admin.status,
+          createdAt: admin.createdAt.toISOString(),
+          updatedAt: admin.updatedAt.toISOString(),
         },
       });
     } catch (error) {

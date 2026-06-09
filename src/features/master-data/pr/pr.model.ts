@@ -19,3 +19,14 @@ export const PrTable = MainSchema.table('m_pr', {
     createdBy: varchar('created_by').notNull(),
     updatedBy: varchar('updated_by').notNull(),
 });
+
+export type PrType = typeof PrTable.$inferSelect;
+export type PrInsertType = typeof PrTable.$inferInsert;
+
+export type PrFilter = {
+    icNo?: string;
+    prNo?: string;
+    status?: string;
+    userId?: string;
+    prAgency?: string;
+};

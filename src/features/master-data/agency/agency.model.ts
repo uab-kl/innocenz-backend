@@ -14,3 +14,12 @@ export const AgencyTable = MainSchema.table('m_agency', {
     createdBy: varchar('created_by').notNull(),
     updatedBy: varchar('updated_by').notNull(),
 });
+
+export type AgencyType = typeof AgencyTable.$inferSelect;
+export type AgencyInsertType = typeof AgencyTable.$inferInsert;
+
+export type AgencyFilter = {
+    agencyName?: string;
+    status?: string;
+    agencyEmail?: string;
+};

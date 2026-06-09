@@ -15,6 +15,14 @@ import { RolePermissionControllerClass } from '@/features/rbac/role-permission/r
 import { RbacControllerClass } from '@/features/rbac/rbac.controller.js';
 import { AuditLogRepositoryClass } from '@/features/audit-log/audit.repository.js';
 import { AuditLogControllerClass } from '@/features/audit-log/audit-log.controller.js';
+import { AgencyRepositoryClass } from '@/features/master-data/agency/agency.repository.js';
+import { AgencyControllerClass } from '@/features/master-data/agency/agency.controller.js';
+import { PrRepositoryClass } from '@/features/master-data/pr/pr.repository.js';
+import { PrControllerClass } from '@/features/master-data/pr/pr.controller.js';
+import { OutletRepositoryClass } from '@/features/master-data/outlet-owner/outlet/outlet.repository.js';
+import { OutletControllerClass } from '@/features/master-data/outlet-owner/outlet/outlet.controller.js';
+import { AgencyUserRepositoryClass } from '@/features/master-data/agency/agency-user/agency-user.repository.js';
+import { AgencyUserControllerClass } from '@/features/master-data/agency/agency-user/agency-user.controller.js';
 
 export const jwtController = new JwtControllerClass();
 export const authRepository = new AuthRepositoryClass(jwtController);
@@ -40,3 +48,15 @@ export const rbacController = new RbacControllerClass(rolePermissionRepository);
 
 export const auditLogRepository = new AuditLogRepositoryClass();
 export const auditLogController = new AuditLogControllerClass(auditLogRepository);
+
+export const agencyRepository = new AgencyRepositoryClass();
+export const agencyController = new AgencyControllerClass(agencyRepository);
+
+export const prRepository = new PrRepositoryClass();
+export const prController = new PrControllerClass(prRepository);
+
+export const outletRepository = new OutletRepositoryClass();
+export const outletController = new OutletControllerClass(outletRepository);
+
+export const agencyUserRepository = new AgencyUserRepositoryClass();
+export const agencyUserController = new AgencyUserControllerClass(agencyUserRepository);

@@ -16,3 +16,13 @@ export const OutletTable = MainSchema.table('m_outlet', {
     createdBy: varchar('created_by').notNull(),
     updatedBy: varchar('updated_by').notNull(),
 });
+
+export type OutletType = typeof OutletTable.$inferSelect;
+export type OutletInsertType = typeof OutletTable.$inferInsert;
+
+export type OutletFilter = {
+    outletName?: string;
+    status?: string;
+    outletOwnerId?: string;
+    outletEmail?: string;
+};

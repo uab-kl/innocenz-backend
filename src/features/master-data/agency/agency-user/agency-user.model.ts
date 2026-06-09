@@ -22,3 +22,14 @@ export const AgencyUserTable = MainSchema.table(
 
 export type AgencyUserType = typeof AgencyUserTable.$inferSelect;
 export type AgencyUserInsertType = typeof AgencyUserTable.$inferInsert;
+
+export type AgencyUserFilter = {
+  agencyId?: string;
+  userId?: string;
+};
+
+export type AgencyUserRow = AgencyUserType & {
+  agencyName: string;
+  userName: string;
+  userEmail: string;
+};

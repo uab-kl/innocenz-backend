@@ -55,6 +55,11 @@ export function entityIdFromParams(req: Request): string | null {
 const RESOURCE_ENTITY: Record<string, string> = {
   admin: 'Admin',
   auth: 'Auth',
+  agency: 'Agency',
+  'agency-user': 'AgencyUser',
+  pr: 'PR',
+  outlet: 'Outlet',
+  'audit-log': 'AuditLog',
   roles: 'Role',
   modules: 'Module',
   permissions: 'Permission',

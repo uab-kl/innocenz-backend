@@ -1,11 +1,12 @@
 import { MainSchema } from '@/db/db.schema';
 import { bigint, index, jsonb, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
+import { UserTable } from '../user/user.model';
 
 export const AuditLogTable = MainSchema.table(
   'audit_logs',
   {
     auditLogId: bigint('audit_log_id', { mode: 'number' }).notNull().primaryKey().generatedAlwaysAsIdentity(),
-    userId: uuid('user_id'),
+    userId: uuid('user_id').references(() => UserTable.id),
     role: text('role'),
     action: text('action').notNull(),
     entity: text('entity').notNull(),

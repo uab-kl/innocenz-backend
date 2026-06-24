@@ -34,6 +34,22 @@ export type CreateAuditLogInput = {
   userAgent: string;
 };
 
+export type AuditLogListItem = {
+  auditLogId: number;
+  userId: string | null;
+  userName: string | null;
+  role: string | null;
+  action: string;
+  entity: string;
+  entityId: string | null;
+  batchId: string | null;
+  oldData: unknown;
+  newData: unknown;
+  ipAddress: string;
+  userAgent: string;
+  createdAt: Date;
+};
+
 export class AuditLogRepositoryClass {
   constructor() {}
 
@@ -42,21 +58,7 @@ export class AuditLogRepositoryClass {
     paginationParams: PaginationParams,
     context?: GraphQLContext,
     sort?: AuditLogSort,
-  ): Promise<PaginatedResponse<{
-    auditLogId: number;
-    userId: string | null;
-    userName: string | null;
-    role: string | null;
-    action: string;
-    entity: string;
-    entityId: string | null;
-    batchId: string | null;
-    oldData: unknown;
-    newData: unknown;
-    ipAddress: string;
-    userAgent: string;
-    createdAt: Date;
-  }>> {
+  ): Promise<PaginatedResponse<AuditLogListItem>> {
     try {
       const whereCondition: SQL[] = [];
 
@@ -135,7 +137,7 @@ export class AuditLogRepositoryClass {
         pageNumber,
         totalCount,
       );
-      const data = await paginatedQuery.query;
+      const data = (await paginatedQuery.query) as AuditLogListItem[];
 
       return { query: data, pagination: paginatedQuery.pagination };
     } catch (error) {

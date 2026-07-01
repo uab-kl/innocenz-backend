@@ -3,7 +3,7 @@ import crypto from 'node:crypto';
 import { AuthRepositoryClass } from './auth.repository.js';
 import { JwtControllerClass } from '@/features/jwt/jwt.controller.js';
 import { Error } from '@/error/index.js';
-import { hashPassword } from '@/util/password.js';
+import { hashPassword, comparePassword } from '@/util/password.js';
 import { logger } from '@/util/logger.js';
 import { LoginSchema, RegisterSchema, ForgotPasswordSchema, ResetPasswordSchema } from '@/schema/auth.schema.js';
 import { UserRepositoryClass as UserRepository } from '@/features/user/user.repository.js';
@@ -22,32 +22,30 @@ export class AuthControllerClass {
 
   async login(req: Request, res: Response) {
     try {
-      logger.info('[AuthController.login] Login request received');
-      const parsedBody = LoginSchema.parse(req.body);
+      logger.info('[AuthController.login] Login request received', {
+        hasBody: Boolean(req.body && Object.keys(req.body).length > 0),
+        contentType: req.headers['content-type'],
+      });
 
-      if (!parsedBody) {
-        logger.warn('[AuthController.login] Validation failed');
+      const parsed = LoginSchema.safeParse(req.body);
+      if (!parsed.success) {
+        logger.warn('[AuthController.login] Validation failed', parsed.error.issues);
         return res.status(400).json({
           success: false,
-          message: 'Please fill in all mandatory fields',
+          message: parsed.error.issues[0]?.message ?? 'Please fill in all mandatory fields',
         });
       }
 
+      const parsedBody = parsed.data;
       let loginMethod: 'email' | 'phone';
       let loginCriteria: string;
 
       if (parsedBody.email) {
         loginMethod = 'email';
         loginCriteria = parsedBody.email;
-      } else if (parsedBody.phoneNum) {
-        loginMethod = 'phone';
-        loginCriteria = parsedBody.phoneNum;
       } else {
-        logger.warn('[AuthController.login] Missing email or phone number');
-        return res.status(400).json({
-          success: false,
-          message: 'Please provide an email or phone number',
-        });
+        loginMethod = 'phone';
+        loginCriteria = parsedBody.phoneNum!;
       }
 
       const user = await this.userRepository.getUserByLoginMethod(loginMethod, loginCriteria);
@@ -55,7 +53,7 @@ export class AuthControllerClass {
         logger.warn('[AuthController.login] User not found');
         return res.status(401).json({
           success: false,
-          message: 'User not found',
+          message: 'Invalid credentials',
         });
       }
 
@@ -64,6 +62,14 @@ export class AuthControllerClass {
         return res.status(401).json({
           success: false,
           message: 'User is not active',
+        });
+      }
+
+      if (!user.passwordHash || !(await comparePassword(parsedBody.password, user.passwordHash))) {
+        logger.warn('[AuthController.login] Invalid password');
+        return res.status(401).json({
+          success: false,
+          message: 'Invalid credentials',
         });
       }
 
@@ -84,6 +90,12 @@ export class AuthControllerClass {
         },
       });
     } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          success: false,
+          message: error.issues[0]?.message ?? 'Please fill in all mandatory fields',
+        });
+      }
       logger.error('[AuthController.login] Error:', error);
       return res.status(500).json({
         success: false,

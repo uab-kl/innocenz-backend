@@ -1,10 +1,15 @@
 import { z } from 'zod';
 
-const LoginSchema = z.object({
-  email: z.string().optional(),
-  phoneNum: z.string().optional(),
-  password: z.string().min(1, 'Password is required'),
-});
+const LoginSchema = z
+  .object({
+    email: z.email('Invalid email format').optional(),
+    phoneNum: z.string().min(1).optional(),
+    password: z.string().min(1, 'Password is required'),
+  })
+  .refine((data) => Boolean(data.email || data.phoneNum), {
+    message: 'Please provide an email or phone number',
+    path: ['email'],
+  });
 
 const ForgotPasswordSchema = z.object({
   email: z.string().optional(),

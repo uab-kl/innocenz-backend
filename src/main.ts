@@ -104,10 +104,10 @@ app.use(
   }),
 );
 app.use(requestLoggerMiddleware);
-app.use(platformAuditMiddleware);
 app.use('/img', express.static(path.join(process.cwd(), 'public', 'img')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(platformAuditMiddleware);
 
 app.use('/api/v1', v1Router);
 

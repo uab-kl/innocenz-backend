@@ -1,12 +1,11 @@
 import 'dotenv/config';
-import { fileURLToPath } from 'node:url';
 
 import { eq } from 'drizzle-orm';
 import { db } from '@/db/index';
 import { RoleTable } from '@/features/rbac/role/role.model';
 import { logger } from '@/util/logger';
 
-const DEFAULT_ROLES = ['admin', 'agency', 'pr', 'outlet'] as const;
+const DEFAULT_ROLE_NAMES = ['admin', 'agency', 'pr', 'outlet'] as const;
 const ACTOR = 'system';
 
 async function ensureRole(roleName: string): Promise<void> {
@@ -31,18 +30,9 @@ async function ensureRole(roleName: string): Promise<void> {
 }
 
 export async function initRoles(): Promise<void> {
-  for (const roleName of DEFAULT_ROLES) {
+  for (const roleName of DEFAULT_ROLE_NAMES) {
     await ensureRole(roleName);
   }
 
-  logger.info(`Default roles ready: ${DEFAULT_ROLES.join(', ')}`);
-}
-
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  initRoles()
-    .then(() => process.exit(0))
-    .catch((error) => {
-      logger.error('Failed to seed default roles', error);
-      process.exit(1);
-    });
+  logger.info(`Default roles ready: ${DEFAULT_ROLE_NAMES.join(', ')}`);
 }

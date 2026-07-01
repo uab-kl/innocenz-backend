@@ -1,5 +1,4 @@
 import 'dotenv/config';
-import { fileURLToPath } from 'node:url';
 
 import { and, eq } from 'drizzle-orm';
 import { db } from '@/db/index';
@@ -77,6 +76,7 @@ export async function initAdmin(): Promise<void> {
       .from(UserProfileTable)
       .where(eq(UserProfileTable.userId, existingUser.id))
       .limit(1);
+
     if (!existingProfile) {
       await db.insert(UserProfileTable).values({
         userId: existingUser.id,
@@ -112,15 +112,11 @@ export async function initAdmin(): Promise<void> {
     .returning();
 
   await ensureAdminRoleForUser(user.id, adminRoleId);
-  await db.insert(UserProfileTable).values({ userId: user.id, createdBy: ACTOR, updatedBy: ACTOR });
-  logger.info(`Default admin user created: ${DEFAULT_ADMIN_EMAIL}`);
-}
+  await db.insert(UserProfileTable).values({
+    userId: user.id,
+    createdBy: ACTOR,
+    updatedBy: ACTOR,
+  });
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  initAdmin()
-    .then(() => process.exit(0))
-    .catch((error) => {
-      logger.error('Failed to seed default admin', error);
-      process.exit(1);
-    });
+  logger.info(`Default admin user created: ${DEFAULT_ADMIN_EMAIL}`);
 }

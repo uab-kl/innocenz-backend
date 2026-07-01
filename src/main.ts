@@ -2,10 +2,10 @@ import 'dotenv/config';
 
 import http from 'node:http';
 import path from 'node:path';
+import { spawn } from 'node:child_process';
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
-import { spawn } from 'node:child_process';
 import { ApolloServer } from '@apollo/server';
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
 import { expressMiddleware } from '@as-integrations/express5';
@@ -26,7 +26,6 @@ import { ensureProfileImageDir } from './util/profile-image';
 import { registerAllAuditOldDataFetchers } from './features/audit-log/audit-log.wrapper';
 
 ensureProfileImageDir();
-
 registerAllAuditOldDataFetchers();
 
 const app = express();
@@ -43,7 +42,10 @@ const corsOptions: cors.CorsOptions = {
     const allowedOrigins = new Set([
       frontendOrigin,
       'http://localhost:3000',
+      'http://localhost:3001',
       'http://127.0.0.1:3000',
+      'http://127.0.0.1:3001',
+      'https://innocenz.duckdns.org',
       'https://studio.apollographql.com',
     ]);
 
@@ -102,6 +104,7 @@ app.use(
   }),
 );
 app.use(requestLoggerMiddleware);
+app.use(platformAuditMiddleware);
 app.use('/img', express.static(path.join(process.cwd(), 'public', 'img')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -127,13 +130,18 @@ function cleanCliOutput(value?: string): string | undefined {
 }
 
 async function runMigrations(): Promise<void> {
+  const drizzleKit = path.join(process.cwd(), 'node_modules', 'drizzle-kit', 'bin.cjs');
+
   try {
     await new Promise<void>((resolve, reject) => {
-      const child = spawn('pnpm', ['run', 'migrate:deploy'], {
-        env: { ...process.env, CI: 'true' },
-        stdio: ['ignore', 'pipe', 'pipe'],
-        shell: true,
-      });
+      const child = spawn(
+        process.execPath,
+        [drizzleKit, 'migrate', '--config', 'drizzle.migrate.config.ts'],
+        {
+          env: { ...process.env, CI: 'true' },
+          stdio: ['ignore', 'pipe', 'pipe'],
+        },
+      );
 
       let stdout = '';
       let stderr = '';
@@ -220,22 +228,31 @@ async function startApolloServer(): Promise<void> {
   logger.info('GraphQL endpoint available at /graphql');
 }
 
-await startApolloServer();
+async function bootstrap(): Promise<void> {
+  await startApolloServer();
 
-const server = http.createServer(app);
+  const server = http.createServer(app);
 
-server.listen(Number(PORT), async () => {
-  logger.info(`Server is listening on port ${PORT}...`);
+  server.listen(Number(PORT), () => {
+    logger.info(`Server is listening on port ${PORT}...`);
+  });
 
-  if (env.NODE_ENV === 'production') {
-    logger.info('Running migrations...');
-    await runMigrations();
-  }
+  void (async () => {
+    if (env.NODE_ENV === 'production') {
+      logger.info('Running migrations...');
+      await runMigrations();
+    }
 
-  try {
-    await initRoles();
-    await initAdmin();
-  } catch (error) {
-    logger.error('Failed to initialize seed data', error);
-  }
+    try {
+      await initRoles();
+      await initAdmin();
+    } catch (error) {
+      logger.error('Failed to initialize seed data', error);
+    }
+  })();
+}
+
+bootstrap().catch((error) => {
+  logger.error('Failed to start server', error);
+  process.exit(1);
 });
